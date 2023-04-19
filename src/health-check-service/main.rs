@@ -15,7 +15,7 @@ pub mod authentication {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Explain AUTH_SERVICE_HOST_NAME
-    let auth_hostname = env::var("AUTH_SERVICE_HOST_NAME").unwrap_or("[::0]".to_owned());
+    let auth_hostname = env::var("AUTH_SERVICE_HOST_NAME").unwrap_or("[::1]".to_owned());
 
     // Establish connection when auth service
     let mut client = AuthClient::connect(format!("http://{}:50051", auth_hostname)).await?;
