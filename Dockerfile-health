@@ -1,0 +1,27 @@
+FROM rust:alpine as chef
+
+    USER root
+    WORKDIR /microservice-project
+
+    ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+
+    RUN apk update && apk add musl-dev protoc
+    RUN rustup target add x86_64-unknown-linux-musl
+    RUN cargo install cargo-chef --locked
+
+FROM chef AS recipe
+
+    COPY . .
+    RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
+
+    COPY --from=recipe /microservice-project/recipe.json recipe.json
+    RUN cargo chef cook --release --recipe-path recipe.json
+    COPY . .
+    RUN cargo build --release --bin health-check
+
+FROM scratch
+    ENV AUTH_SERVICE_HOST_NAME=auth
+    COPY --from=builder /microservice-project/target/release/health-check /usr/local/bin/
+    ENTRYPOINT ["health-check"]
